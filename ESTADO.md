@@ -34,8 +34,10 @@ Sin probar todavia: **retirar del vault** y la pantalla `/recibir`.
 - **Dolarizar** (`/cambiar`) — ARGt a USDC en el pool de Uniswap V4 que usa Twin en
   Base. Un par y un sentido: se chequearon las 5 stablecoins de Twin que viven en
   Base contra USDC en los 4 fee tiers y solo ARGt/USDC tiene liquidez; el sentido
-  inverso revierte con montos minimos. **Encoding verificado por simulacion con
-  `scripts/verify-swap.mjs`, pero NUNCA se firmo una transaccion.**
+  inverso revierte con montos minimos.
+  **PROBADO CON PLATA REAL**: 10 ARGt -> 0,006215 USDC, `success`, via UniversalRouter
+  (selector `0x3593564c`) contra el PoolManager de V4, 172.872 de gas.
+  https://basescan.org/tx/0x52a714ba37d29f1bc58c197ed085a27ce3f38835743d625b28e9ebdd42bcfed3
 - **Movimientos** (`/movimientos`) — historial leido de los logs de las 3 redes, sin
   indexer ni backend. Agrupa por transaccion para que un swap sea una fila.
   Probado contra la wallet real: encuentra las 5 operaciones con etiqueta correcta.
@@ -60,9 +62,10 @@ nativas no emiten logs, `useHistory` filtra por `event Transfer`, y ningun RPC
 publico disponible expone `trace_filter` ni `alchemy_getAssetTransfers`. No es un
 bug: mostrarlos requeriria escanear las transacciones de cada bloque o un indexer.
 
-## Bloqueante para probar dolarizar
+## Lo unico sin probar con plata real
 
-La wallet tiene **0 ETH en Base**. Sin gas no se puede firmar. Con 0,0005 alcanza.
+El envio de moneda nativa (ETH y POL). Todo lo demas ya se firmo en mainnet:
+balances, transfers, vault, bridge y dolarizar.
 
 ## Verificado contra mainnet (sin gastar gas)
 
