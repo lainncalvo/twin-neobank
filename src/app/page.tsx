@@ -15,6 +15,8 @@ const ACTIONS = [
   { href: '/recibir', label: 'Recibir', icon: 'M10 3v9.2l3.2-3.2 1.4 1.4-5.6 5.6-5.6-5.6 1.4-1.4L8 12.2V3h2Z' },
   { href: '/ahorro', label: 'Ahorrar', icon: 'M3 6.5A2.5 2.5 0 0 1 5.5 4h9A2.5 2.5 0 0 1 17 6.5v7a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 3 13.5v-7Zm10.5 5.5a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z' },
   { href: '/mover', label: 'Mover', icon: 'M6.5 3 2 7.5l4.5 4.5V9h7V6h-7V3Zm7 6v3h-7v3h7v3L18 13.5 13.5 9Z' },
+  // Va en la grilla y no en la barra de abajo: la barra se queda en 4 destinos.
+  { href: '/cambiar', label: 'Dolarizar', icon: 'M10.8 2.5v1.6c1.7.2 2.9 1.1 3 2.6h-1.9c-.1-.7-.6-1.2-1.6-1.3v3l.8.2c1.9.4 2.9 1.3 2.9 2.9 0 1.7-1.2 2.7-3.2 2.9v1.6H9.2v-1.6c-1.9-.2-3.1-1.2-3.2-2.8h1.9c.1.8.7 1.3 1.7 1.4v-3.1l-.7-.2C7 9.7 6 8.9 6 7.3c0-1.6 1.2-2.6 3.2-2.8V2.5h1.6ZM9.2 5.4c-.8.1-1.3.5-1.3 1.2 0 .6.4 1 1.3 1.2V5.4Zm1.6 8.1c.9-.1 1.4-.6 1.4-1.2 0-.6-.4-1-1.4-1.3v2.5Z' },
 ]
 
 export default function HomePage() {
@@ -45,12 +47,12 @@ function Home() {
         loading={isLoading}
       />
 
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         {ACTIONS.map((a) => (
           <Link
             key={a.href}
             href={a.href}
-            className="flex flex-col items-center gap-2 rounded-xl border border-ink-800 bg-ink-900/60 py-3 text-[11px] font-medium text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100"
+            className="flex flex-col items-center gap-2 rounded-xl border border-ink-800 bg-ink-900/60 px-1 py-3 text-[10px] font-medium text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100"
           >
             <svg viewBox="0 0 20 20" className="size-5" fill="currentColor" aria-hidden>
               <path d={a.icon} />

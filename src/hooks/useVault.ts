@@ -243,6 +243,13 @@ export function humanError(e: unknown): string {
   if (/User rejected|denied transaction|User denied/i.test(msg)) return 'Cancelaste la operación.'
   if (/insufficient funds/i.test(msg)) return 'No te alcanza el ETH para pagar el gas.'
   if (/exceeds balance|transfer amount exceeds/i.test(msg)) return 'No te alcanza el saldo.'
+  // Reverts de Uniswap V4 y Permit2, que salen como selector pelado.
+  if (/0xd81b2f2e|AllowanceExpired/i.test(msg)) {
+    return 'Se venció el permiso. Reintentá: te va a pedir una firma más.'
+  }
+  if (/0x8b063d73|TooLittleReceived/i.test(msg)) {
+    return 'El precio se movió mientras firmabas. Reintentá.'
+  }
   // Los reverts largos de viem no le sirven a nadie: nos quedamos con la 1ra linea.
   return msg.split('\n')[0].slice(0, 160)
 }

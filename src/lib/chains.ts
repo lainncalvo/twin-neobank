@@ -32,6 +32,37 @@ export const BRIDGE_DUST_UNIT = 10n ** 12n
 export const VAULT_CHAIN_ID = arbitrum.id
 export const VAULT_ADDRESS = '0x9Dd3F844747AB78d616BF76DB92756E17A064aDD' as const
 
+/**
+ * Dolarizar: ARGt -> USDC en Uniswap V4. Solo en Base, que es la unica red donde
+ * existe el pool. Verificado con scripts/verify-swap.mjs.
+ */
+export const SWAP_CHAIN_ID = base.id
+export const V4_QUOTER = '0x0d5e0F971ED27FBfF6c2837bf31316121532048D' as const
+export const UNIVERSAL_ROUTER = '0x6fF5693b99212Da76ad316178A184AB56D299b43' as const
+export const PERMIT2 = '0x000000000022D473030F116dDEE9F6B43aC78BA3' as const
+
+/**
+ * PoolKey exacto del unico pool ARGt/USDC con liquidez (poolId 0xba3ea6f7...).
+ * currency0 es SIEMPRE la address menor: USDC < ARGt, y por eso vender ARGt para
+ * comprar USDC va con zeroForOne = false. No reordenar estos campos.
+ *
+ * Se chequearon las cinco stablecoins de Twin que viven en Base contra USDC en los
+ * cuatro fee tiers: solo este par tiene liquidez.
+ */
+export const ARGT_USDC_POOL = {
+  currency0: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+  currency1: '0xf016413834E6D1A14F3D628B11D6Ef725a6bdbDD',
+  fee: 3000,
+  tickSpacing: 60,
+  hooks: '0x0000000000000000000000000000000000000000',
+} as const
+
+/**
+ * Tolerancia sobre la cotizacion. El pool tiene ~USD 700 de TVL y el impacto medido
+ * a 100.000 ARGt ya es 0,21%, asi que 0,5% queda demasiado ajustado.
+ */
+export const SWAP_SLIPPAGE_BPS = 100n
+
 export const CHAIN_META: Record<SupportedChainId, { name: string; color: string; explorer: string }> = {
   [arbitrum.id]: { name: 'Arbitrum', color: '#28A0F0', explorer: 'https://arbiscan.io' },
   [base.id]: { name: 'Base', color: '#0052FF', explorer: 'https://basescan.org' },

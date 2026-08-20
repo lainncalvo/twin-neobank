@@ -22,7 +22,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="es-AR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full">
+      {/* Grammarly y otras extensiones inyectan atributos en el body antes de
+          que React hidrate. Sin esto, el overlay de dev tira un hydration error
+          que no es nuestro. */}
+      <body className="min-h-full" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>
     </html>
