@@ -87,7 +87,7 @@ function Cambiar() {
       <Card className="flex items-center justify-center gap-3 p-4">
         <span className="text-sm font-medium">{TOKENS.ARGt.flag} ARGt</span>
         <svg viewBox="0 0 20 20" className="size-4 text-ink-500" fill="currentColor" aria-hidden>
-          <path d="M11 4v3h7v2h-7v3l-5-4 5-4Z" />
+          <path d="M9 4v3h-7v2h7v3l5-4-5-4Z" />
         </svg>
         <span className="text-sm font-medium">{TOKENS.USDC.flag} USDC</span>
         <span className="rounded-full border border-ink-700 px-2 py-0.5 text-[11px] text-ink-400">
