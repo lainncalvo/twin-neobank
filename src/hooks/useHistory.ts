@@ -88,10 +88,21 @@ function buildMovements(
     const kind: Movement['kind'] = outLeg && inLeg ? 'swap' : outLeg ? 'out' : 'in'
     const known = knownName(chainId, counterparty)
 
-    // Un swap sale como dos logs y tiene que verse como una sola fila.
+    // Un swap sale como dos logs y tiene que verse como una sola fila. La etiqueta
+    // se arma con los simbolos de las patas: antes decia "Cambiaste a dolares" para
+    // cualquier swap, asi que comprar bitcoin aparecia como si fuera dolarizar.
+    const swapLabel = () => {
+      if (!outLeg || !inLeg) return 'Cambiaste'
+      if (inLeg.symbol === 'USDC') {
+        return outLeg.symbol === 'ARGt' ? 'Cambiaste a dólares' : `Vendiste ${outLeg.symbol}`
+      }
+      if (outLeg.symbol === 'USDC') return `Compraste ${inLeg.symbol}`
+      return `Cambiaste ${outLeg.symbol} por ${inLeg.symbol}`
+    }
+
     const label =
       kind === 'swap'
-        ? 'Cambiaste a dólares'
+        ? swapLabel()
         : kind === 'out'
           ? (known === 'Ahorro ARGt Prime' ? 'Depositaste en ahorro'
             : known === 'Puente entre redes' ? 'Moviste a otra red'

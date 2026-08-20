@@ -10,6 +10,7 @@ import { GasGuard } from '@/components/GasGuard'
 import { useBalances } from '@/hooks/useBalances'
 import { useSwap, type SwapStep } from '@/hooks/useSwap'
 import { SWAP_CHAIN_ID } from '@/lib/chains'
+import { SWAP_ROUTES } from '@/lib/swap'
 import { TOKENS } from '@/lib/tokens'
 import { exactAmountInput, formatAmount, parseAmount } from '@/lib/format'
 
@@ -40,8 +41,10 @@ function Cambiar() {
   const enBase = byChain[SWAP_CHAIN_ID] ?? 0n
   const enOtrasRedes = (balances.get('ARGt')?.total ?? 0n) - enBase
 
-  const parsed = useMemo(() => parseAmount(amount, 18) ?? 0n, [amount])
-  const swap = useSwap({ amount: parsed })
+  const route = SWAP_ROUTES['ARGt-USDC']
+  const decimalsIn = TOKENS[route.from].decimals
+  const parsed = useMemo(() => parseAmount(amount, decimalsIn) ?? 0n, [amount, decimalsIn])
+  const swap = useSwap({ amount: parsed, route })
   const busy = swap.step !== 'idle' && swap.step !== 'done'
 
   const problem = (() => {
@@ -59,7 +62,7 @@ function Cambiar() {
         <BackLink />
         <SuccessCard
           title="Ya tenés dólares"
-          detail={`${formatAmount(parsed)} ARGt → ${formatAmount(swap.amountOut ?? 0n, 6)} USDC`}
+          detail={`${formatAmount(parsed, decimalsIn)} ARGt → ${formatAmount(swap.amountOut ?? 0n, swap.decimalsOut)} USDC`}
           chainId={SWAP_CHAIN_ID}
           hash={swap.txHash}
           onDone={() => {
@@ -114,7 +117,7 @@ function Cambiar() {
         onChange={setAmount}
         symbol="ARGt"
         max={enBase}
-        onMax={() => setAmount(exactAmountInput(enBase, 18))}
+        onMax={() => setAmount(exactAmountInput(enBase, decimalsIn))}
       />
 
       {parsed > 0n && (
@@ -123,7 +126,7 @@ function Cambiar() {
             label="Recibís"
             value={
               swap.amountOut !== undefined
-                ? `${formatAmount(swap.amountOut, 6)} USDC`
+                ? `${formatAmount(swap.amountOut, swap.decimalsOut)} USDC`
                 : swap.isQuoting
                   ? 'Cotizando...'
                   : '—'
@@ -134,21 +137,24 @@ function Cambiar() {
             label="Cotización"
             value={
               swap.amountOut !== undefined && swap.amountOut > 0n
-                ? `1 USDC = ${formatAmount((parsed * 1_000_000n) / swap.amountOut)} ARGt`
+                ? `1 USDC = ${formatAmount(
+                    (parsed * 10n ** BigInt(swap.decimalsOut)) / swap.amountOut,
+                    decimalsIn,
+                  )} ARGt`
                 : '—'
             }
           />
           <Line
             label="Mínimo garantizado"
             value={
-              swap.amountOutMin !== undefined ? `${formatAmount(swap.amountOutMin, 6)} USDC` : '—'
+              swap.amountOutMin !== undefined
+                ? `${formatAmount(swap.amountOutMin, swap.decimalsOut)} USDC`
+                : '—'
             }
           />
           <p className="pt-1 text-[11px] leading-relaxed text-ink-600">
-            El cambio se hace en el pool de Uniswap V4 que usa Twin. Es un mercado chico (unos
-            USD 700 de liquidez), así que los montos grandes pagan más: hasta 10.000 ARGt el costo
-            ronda el 0,4%. Por ahora solo en este sentido, el de vuelta todavía no tiene
-            profundidad.
+            El cambio se hace en el pool de Uniswap V4 que usa Twin. {route.note} Por ahora solo en
+            este sentido: el de vuelta todavía no tiene profundidad.
           </p>
         </Card>
       )}

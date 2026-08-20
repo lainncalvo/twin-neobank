@@ -5,6 +5,7 @@ export type TokenSymbol =
   | 'ARGt' | 'BRAt' | 'MEXt' | 'CHLt' | 'COLt' | 'PERt' | 'BOLt'
   | 'USDC' | 'USDT' | 'EURC'
   | 'ETH' | 'POL'
+  | 'cbBTC' | 'VIRTUAL'
 
 export type TokenMeta = {
   symbol: TokenSymbol
@@ -192,6 +193,34 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
     addresses: {},
     chains: [polygon.id],
   },
+
+  // Activos de inversion. Solo en Base, que es donde estan los pools de Uniswap V4
+  // con los que se compran. Verificados con scripts/verify-swap.mjs.
+  //
+  // No hay entrada para WETH a proposito: el ETH se compra NATIVO (currency 0x0 en
+  // V4), que da mejor precio y cae en el saldo de ETH que el usuario ya ve.
+  cbBTC: {
+    symbol: 'cbBTC',
+    kind: 'erc20',
+    name: 'Coinbase Wrapped BTC',
+    currency: 'Bitcoin',
+    flag: '₿',
+    decimals: 8,
+    addresses: {
+      [base.id]: '0xcbB7C0000aB88B473b1f5aFd9ef808440eed33Bf',
+    },
+  },
+  VIRTUAL: {
+    symbol: 'VIRTUAL',
+    kind: 'erc20',
+    name: 'Virtuals Protocol',
+    currency: 'Virtuals',
+    flag: '◈',
+    decimals: 18,
+    addresses: {
+      [base.id]: '0x0b3e328455c4059EEb9e3f84b5543F74E24e7E1b',
+    },
+  },
 }
 
 /**
@@ -200,7 +229,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
  */
 export const TOKEN_ORDER: TokenSymbol[] = [
   'ARGt', 'USDC', 'USDT', 'EURC', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt',
-  'ETH', 'POL',
+  'cbBTC', 'VIRTUAL', 'ETH', 'POL',
 ]
 
 /** Monedas fuertes: el destino de dolarizar. */
@@ -212,6 +241,10 @@ export const TWIN_TOKENS: TokenSymbol[] = ['ARGt', 'BRAt', 'MEXt', 'CHLt', 'COLt
 /** Con estas se paga el gas. Se muestran siempre, incluso en cero: no poder verlas
  *  es justo el problema que esta seccion resuelve. */
 export const NATIVE_TOKENS: TokenSymbol[] = ['ETH', 'POL']
+
+/** Lo que se puede comprar con dolares. ETH no esta aca aunque se pueda comprar:
+ *  ya se muestra en "Para pagar red" y repetir la fila confunde. */
+export const INVEST_TOKENS: TokenSymbol[] = ['cbBTC', 'VIRTUAL']
 
 export function tokenAddress(symbol: TokenSymbol, chainId: SupportedChainId) {
   return TOKENS[symbol].addresses[chainId]

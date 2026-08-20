@@ -82,8 +82,12 @@ export const KNOWN: Record<number, Record<string, string>> = (() => {
     add(chainId, ZERO, 'Emisión')
   }
   add(VAULT_CHAIN_ID, VAULT_ADDRESS, 'Ahorro ARGt Prime')
-  add(SWAP_CHAIN_ID, V4_POOL_MANAGER, 'Cambio a dólares')
-  add(SWAP_CHAIN_ID, UNIVERSAL_ROUTER, 'Cambio a dólares')
+  // Neutro a proposito: por esta contraparte pasan dolarizar, comprar y vender.
+  // Cuando el swap tiene sus dos patas, useHistory arma una etiqueta mas precisa;
+  // esta se usa cuando solo se ve un lado, como al comprar ETH nativo, que no emite
+  // log de entrada.
+  add(SWAP_CHAIN_ID, V4_POOL_MANAGER, 'Cambio en Uniswap')
+  add(SWAP_CHAIN_ID, UNIVERSAL_ROUTER, 'Cambio en Uniswap')
   return known
 })()
 
