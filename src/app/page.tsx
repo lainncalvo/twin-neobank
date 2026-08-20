@@ -6,7 +6,9 @@ import { AppShell } from '@/components/AppShell'
 import { HeroBalance, TokenRow } from '@/components/BalanceCard'
 import { Card } from '@/components/ui'
 import { useBalances, type TokenBalance } from '@/hooks/useBalances'
+import { useHistory } from '@/hooks/useHistory'
 import { useVaultPosition } from '@/hooks/useVault'
+import { MovementRow } from '@/components/MovementRow'
 import { formatAmount } from '@/lib/format'
 import { HARD_TOKENS, TWIN_TOKENS, type TokenSymbol } from '@/lib/tokens'
 
@@ -32,6 +34,8 @@ function Home() {
   const { balances, all, isLoading } = useBalances(address)
   const argt = balances.get('ARGt')!
   const vault = useVaultPosition(address)
+  const { movements } = useHistory(address)
+  const recent = movements.slice(0, 3)
   const bySymbol = (s: TokenSymbol) => all.find((b) => b.symbol === s)
   const hard = HARD_TOKENS.map(bySymbol).filter(Boolean) as TokenBalance[]
   const region = TWIN_TOKENS.filter((s) => s !== 'ARGt')
@@ -104,6 +108,24 @@ function Home() {
           ))}
         </Card>
       </section>
+
+      {recent.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between px-3 pb-1">
+            <h2 className="text-xs font-medium uppercase tracking-wide text-ink-400">
+              Movimientos
+            </h2>
+            <Link href="/movimientos" className="text-[11px] text-mint-400 hover:underline">
+              Ver todos
+            </Link>
+          </div>
+          <Card className="divide-y divide-ink-800/70 p-1">
+            {recent.map((m) => (
+              <MovementRow key={m.id} movement={m} />
+            ))}
+          </Card>
+        </section>
+      )}
 
       <p className="px-2 pb-4 text-[11px] leading-relaxed text-ink-600">
         Twin Stablecoins son instrumentos de pago digital respaldados por reservas. No son valores

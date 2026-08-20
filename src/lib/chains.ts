@@ -38,6 +38,8 @@ export const VAULT_ADDRESS = '0x9Dd3F844747AB78d616BF76DB92756E17A064aDD' as con
  */
 export const SWAP_CHAIN_ID = base.id
 export const V4_QUOTER = '0x0d5e0F971ED27FBfF6c2837bf31316121532048D' as const
+/** Adonde van fisicamente los tokens en un swap V4: el singleton de Uniswap. */
+export const V4_POOL_MANAGER = '0x498581fF718922c3f8e6A244956aF099B2652b2b' as const
 export const UNIVERSAL_ROUTER = '0x6fF5693b99212Da76ad316178A184AB56D299b43' as const
 export const PERMIT2 = '0x000000000022D473030F116dDEE9F6B43aC78BA3' as const
 
