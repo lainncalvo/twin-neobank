@@ -5,11 +5,12 @@ import { useAccount } from 'wagmi'
 import { AppShell } from '@/components/AppShell'
 import { AmountInput, ChainPicker, SuccessCard, TxStatus } from '@/components/inputs'
 import { BackLink, Button, Card, ErrorNote } from '@/components/ui'
+import { GasGuard } from '@/components/GasGuard'
 import { useBalances } from '@/hooks/useBalances'
 import { layerZeroScanUrl, useBridge, type BridgeStep } from '@/hooks/useBridge'
 import { CHAIN_META, chainById, type SupportedChainId } from '@/lib/chains'
 import { chainsForToken } from '@/lib/tokens'
-import { formatAmount, formatEth, parseAmount } from '@/lib/format'
+import { exactAmountInput, formatAmount, formatEth, parseAmount } from '@/lib/format'
 
 const ROUTE_CHAINS = chainsForToken('ARGt')
 
@@ -100,7 +101,7 @@ function Mover() {
         onChange={setAmount}
         symbol="ARGt"
         max={available}
-        onMax={() => setAmount(formatAmount(available, 18, 6))}
+        onMax={() => setAmount(exactAmountInput(available))}
       />
 
       {parsed > 0n && (
@@ -120,19 +121,14 @@ function Mover() {
             label={`Comisión de red (${chainById(src)?.nativeCurrency.symbol ?? 'ETH'})`}
             value={bridge.nativeFee !== undefined ? formatEth(bridge.nativeFee) : '—'}
           />
-          {bridge.dust > 0n && (
-            <Line
-              label="Se redondea"
-              value={`−${formatAmount(bridge.dust, 18, 18)} ARGt`}
-              muted
-            />
-          )}
           <p className="pt-1 text-[11px] leading-relaxed text-ink-600">
-            El puente trabaja con 6 decimales, así que el monto se redondea para abajo. Tarda entre
-            1 y 3 minutos en acreditarse.
+            El puente trabaja con 6 decimales, así que el monto se redondea para abajo antes de
+            enviarse. Tarda entre 1 y 3 minutos en acreditarse.
           </p>
         </Card>
       )}
+
+      <GasGuard chainId={src} />
 
       <ErrorNote>{problem || bridge.quoteError || bridge.error}</ErrorNote>
 
@@ -158,12 +154,10 @@ function Line({
   label,
   value,
   strong,
-  muted,
 }: {
   label: string
   value: string
   strong?: boolean
-  muted?: boolean
 }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -172,9 +166,7 @@ function Line({
         className={
           strong
             ? 'font-mono tabular-nums text-sm font-semibold text-mint-400'
-            : muted
-              ? 'font-mono tabular-nums text-ink-600'
-              : 'font-mono tabular-nums text-ink-200'
+            : 'font-mono tabular-nums text-ink-200'
         }
       >
         {value}

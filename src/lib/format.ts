@@ -1,16 +1,25 @@
 import { formatUnits, parseUnits } from 'viem'
 import { BRIDGE_DUST_UNIT } from './chains'
 
-/** Formato de plata al estilo local: 1.234,56 */
+/**
+ * Formato de plata al estilo local: 1.234,56
+ *
+ * `maxFraction` puede ser 0 (montos redondos tipo "total del vault"), asi que el
+ * minimo se recorta contra el maximo: Intl tira RangeError si min > max.
+ */
 export function formatAmount(value: bigint, decimals = 18, maxFraction = 2) {
   const raw = formatUnits(value, decimals)
   const n = Number(raw)
   if (!Number.isFinite(n)) return raw
-  // Montos chicos pero no cero: mostrar mas decimales antes que "0,00".
-  const fraction = n > 0 && n < 0.01 ? 6 : maxFraction
+
+  // Montos chicos pero distintos de cero: mas decimales antes que mostrar "0,00".
+  const wanted = n > 0 && n < 0.01 ? Math.max(maxFraction, 6) : maxFraction
+  const max = Math.min(wanted, 20)
+  const min = Math.min(2, max)
+
   return new Intl.NumberFormat('es-AR', {
-    minimumFractionDigits: n === 0 ? 2 : 2,
-    maximumFractionDigits: fraction,
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
   }).format(n)
 }
 
@@ -25,9 +34,18 @@ export function parseAmount(input: string, decimals = 18): bigint | null {
 }
 
 /**
+ * Valor exacto para el boton "Disponible": sin separadores de miles y sin
+ * redondeo. Formatear con Intl podria redondear para arriba y dejar el monto
+ * por encima del saldo, con lo cual el boton de enviar queda deshabilitado.
+ */
+export function exactAmountInput(value: bigint, decimals = 18) {
+  return formatUnits(value, decimals).replace('.', ',')
+}
+
+/**
  * El OFT adapter tiene sharedDecimals=6 sobre un token de 18: LayerZero trunca
  * el monto a multiplos de 1e12 y el resto se pierde. Redondeamos nosotros para
- * que el usuario vea exactamente lo que se manda.
+ * que el usuario firme exactamente lo que se manda.
  */
 export function truncateToBridgeUnit(value: bigint): bigint {
   return (value / BRIDGE_DUST_UNIT) * BRIDGE_DUST_UNIT

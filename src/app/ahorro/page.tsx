@@ -4,9 +4,10 @@ import { useMemo, useState } from 'react'
 import { AppShell } from '@/components/AppShell'
 import { AmountInput, SuccessCard, TxStatus } from '@/components/inputs'
 import { BackLink, Button, Card, ErrorNote, Skeleton, cn } from '@/components/ui'
+import { GasGuard } from '@/components/GasGuard'
 import { useVault, type VaultAction } from '@/hooks/useVault'
 import { VAULT_ADDRESS, VAULT_CHAIN_ID, CHAIN_META } from '@/lib/chains'
-import { formatAmount, parseAmount } from '@/lib/format'
+import { exactAmountInput, formatAmount, parseAmount } from '@/lib/format'
 
 const STEP_LABEL: Record<VaultAction, string | null> = {
   idle: null,
@@ -139,13 +140,15 @@ function Ahorro() {
         onChange={setAmount}
         symbol="ARGt"
         max={max}
-        onMax={() => setAmount(formatAmount(max, 18, 6))}
+        onMax={() => setAmount(exactAmountInput(max))}
         hint={
           mode === 'deposit'
             ? 'La primera vez pide dos firmas: una para autorizar el vault y otra para depositar.'
             : undefined
         }
       />
+
+      <GasGuard chainId={VAULT_CHAIN_ID} />
 
       <ErrorNote>{problem || vault.error}</ErrorNote>
 

@@ -5,10 +5,11 @@ import { useAccount } from 'wagmi'
 import { AppShell } from '@/components/AppShell'
 import { AmountInput, ChainPicker, SuccessCard, TokenPicker, TxStatus } from '@/components/inputs'
 import { BackLink, Button, ErrorNote, Label } from '@/components/ui'
+import { GasGuard } from '@/components/GasGuard'
 import { useBalances } from '@/hooks/useBalances'
 import { useTransfer, type TransferStep } from '@/hooks/useTransfer'
 import { chainsForToken, TOKENS, TOKEN_ORDER, type TokenSymbol } from '@/lib/tokens'
-import { formatAmount, isAddressLike, parseAmount } from '@/lib/format'
+import { exactAmountInput, formatAmount, isAddressLike, parseAmount } from '@/lib/format'
 import type { SupportedChainId } from '@/lib/chains'
 import { CHAIN_META } from '@/lib/chains'
 
@@ -114,8 +115,10 @@ function Enviar() {
         onChange={setAmount}
         symbol={symbol}
         max={available}
-        onMax={() => setAmount(formatAmount(available, meta.decimals, 6))}
+        onMax={() => setAmount(exactAmountInput(available, meta.decimals))}
       />
+
+      <GasGuard chainId={chainId} />
 
       <ErrorNote>{problem || error}</ErrorNote>
 
