@@ -55,6 +55,16 @@ Sin probar todavia: **retirar del vault** y la pantalla `/recibir`.
 2. `wagmi.ts` ahora arma los transports con `fallback`. Aditivo: el suplente entra
    solo cuando el primario falla.
 
+- **Invertir** (`/invertir`) — comprar y vender BTC (cbBTC), ETH nativo y VIRTUAL con
+  los dolares, sobre los mismos pools de Uniswap V4 en Base. Cinco rutas verificadas
+  con `scripts/verify-swap.mjs`. **Sin probar todavia con plata real.**
+
+  Acciones tokenizadas: descartadas. Las siete de Twin no tienen liquidez en ningun
+  DEX; las que si (SPYx, NVDAx, TSLAx) estan todas en Solana y la app es EVM.
+
+  De diez tokens medidos solo tres tienen profundidad usable en V4/Base. AERO, DAI y
+  cbETH la tienen pero en Aerodrome y V3: otro router, otro modelo de aprobaciones.
+
 ## Limitacion conocida
 
 `/movimientos` **no** muestra los envios de moneda nativa. Las transferencias
