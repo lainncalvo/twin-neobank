@@ -65,11 +65,14 @@ export function TokenRow({
   total,
   loading,
   onClick,
+  subtitle,
 }: {
   symbol: TokenSymbol
   total: bigint
   loading?: boolean
   onClick?: () => void
+  /** Pisa el simbolo en la segunda linea. Las nativas muestran en que redes viven. */
+  subtitle?: string
 }) {
   const meta = TOKENS[symbol]
   return (
@@ -86,7 +89,7 @@ export function TokenRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">{meta.currency}</span>
-        <span className="block text-xs text-ink-400">{meta.symbol}</span>
+        <span className="block text-xs text-ink-400">{subtitle ?? meta.symbol}</span>
       </span>
       {loading ? (
         <Skeleton className="h-5 w-20" />

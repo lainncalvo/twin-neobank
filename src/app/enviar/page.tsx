@@ -8,8 +8,9 @@ import { BackLink, Button, ErrorNote, Label } from '@/components/ui'
 import { GasGuard } from '@/components/GasGuard'
 import { useBalances } from '@/hooks/useBalances'
 import { useTransfer, type TransferStep } from '@/hooks/useTransfer'
+import { useGasReserve } from '@/hooks/useGasReserve'
 import { chainsForToken, TOKENS, TOKEN_ORDER, type TokenSymbol } from '@/lib/tokens'
-import { exactAmountInput, formatAmount, isAddressLike, parseAmount } from '@/lib/format'
+import { exactAmountInput, formatAmount, formatEth, isAddressLike, parseAmount } from '@/lib/format'
 import type { SupportedChainId } from '@/lib/chains'
 import { CHAIN_META } from '@/lib/chains'
 
@@ -44,6 +45,9 @@ function Enviar() {
   const available = byChain[chainId] ?? 0n
   const parsed = useMemo(() => parseAmount(amount, meta.decimals), [amount, meta.decimals])
 
+  // Con la moneda nativa no se puede mandar todo: el gas se paga con lo mismo.
+  const { isNative, reserve, sendable } = useGasReserve({ symbol, chainId, balance: available })
+
   const pickToken = (s: TokenSymbol) => {
     setSymbol(s)
     // Si el token nuevo no vive en la chain elegida, caemos a la primera que tenga.
@@ -51,12 +55,21 @@ function Enviar() {
   }
 
   const toIsValid = isAddressLike(to)
-  const amountIsValid = parsed !== null && parsed > 0n && parsed <= available
+  const amountIsValid = parsed !== null && parsed > 0n && parsed <= sendable
   const canSend = toIsValid && amountIsValid && step === 'idle'
 
   const problem = (() => {
     if (to && !toIsValid) return 'Esa no parece una dirección válida.'
-    if (parsed !== null && parsed > available) return 'No te alcanza el saldo en esa red.'
+    // Este caso va antes que el de saldo: si no, el usuario ve el boton gris sin
+    // entender por que, teniendo saldo a la vista.
+    if (isNative && available > 0n && sendable === 0n) {
+      return `Tu ${symbol} alcanza justo para la comisión de red. Necesitás un poco más para enviar.`
+    }
+    if (parsed !== null && parsed > sendable) {
+      return isNative
+        ? `Dejá al menos ${formatEth(reserve)} ${symbol} para la comisión de red.`
+        : 'No te alcanza el saldo en esa red.'
+    }
     return null
   })()
 
@@ -114,8 +127,13 @@ function Enviar() {
         value={amount}
         onChange={setAmount}
         symbol={symbol}
-        max={available}
-        onMax={() => setAmount(exactAmountInput(available, meta.decimals))}
+        max={sendable}
+        onMax={() => setAmount(exactAmountInput(sendable, meta.decimals))}
+        hint={
+          isNative
+            ? `Se reservan ${formatEth(reserve)} ${symbol} para pagar la comisión de red.`
+            : undefined
+        }
       />
 
       <GasGuard chainId={chainId} />

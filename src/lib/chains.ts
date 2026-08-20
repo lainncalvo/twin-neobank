@@ -65,6 +65,29 @@ export const ARGT_USDC_POOL = {
  */
 export const SWAP_SLIPPAGE_BPS = 100n
 
+/**
+ * Cuanto se deja sin enviar para poder pagar la comision, por red.
+ *
+ * Es un piso fijo y no solo `gas x precio` por tres motivos:
+ *  - Base es OP-stack: eth_estimateGas devuelve 21.000 pero la comision de datos
+ *    L1 se cobra aparte (medida hoy: 0,0000000007 ETH, o sea nada, pero se dispara
+ *    cuando Ethereum se congestiona).
+ *  - Si el destinatario es un contrato con receive(), gasta mas de 21.000.
+ *  - Un numero que no titila mientras el usuario lo mira genera menos desconfianza,
+ *    y sigue andando aunque el RPC no conteste.
+ *
+ * Contra los costos medidos: Arbitrum 4,8x, Base 15x, Polygon 3,4x. Ser generoso
+ * deja polvo en la wallet; quedarse corto arma una transaccion que falla siempre.
+ */
+export const NATIVE_GAS_RESERVE: Record<SupportedChainId, bigint> = {
+  [arbitrum.id]: 2_000_000_000_000n, // 0,000002 ETH
+  [base.id]: 2_000_000_000_000n, // 0,000002 ETH
+  [polygon.id]: 20_000_000_000_000_000n, // 0,02 POL
+}
+
+/** Un envio de valor nativo sin data consume exactamente esto. */
+export const NATIVE_TRANSFER_GAS = 21_000n
+
 export const CHAIN_META: Record<SupportedChainId, { name: string; color: string; explorer: string }> = {
   [arbitrum.id]: { name: 'Arbitrum', color: '#28A0F0', explorer: 'https://arbiscan.io' },
   [base.id]: { name: 'Base', color: '#0052FF', explorer: 'https://basescan.org' },

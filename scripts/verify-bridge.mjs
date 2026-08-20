@@ -30,10 +30,12 @@ const ADAPTERS = {
   [polygon.id]: '0xD70ad085684b2A9f4B5d54D7BDB2ecA37a273216',
 }
 const EID = { [arbitrum.id]: 30110, [base.id]: 30184, [polygon.id]: 30109 }
+// Con suplente: mainnet.base.org contesta "over rate limit" a las pocas llamadas
+// seguidas, y este script hace seis. Sin esto, dos rutas dan FALLA que no es falla.
 const RPC = {
-  [arbitrum.id]: 'https://arb1.arbitrum.io/rpc',
-  [base.id]: 'https://mainnet.base.org',
-  [polygon.id]: 'https://polygon-bor-rpc.publicnode.com',
+  [arbitrum.id]: ['https://arb1.arbitrum.io/rpc', 'https://arbitrum.gateway.tenderly.co'],
+  [base.id]: ['https://mainnet.base.org', 'https://base.gateway.tenderly.co'],
+  [polygon.id]: ['https://polygon-bor-rpc.publicnode.com', 'https://polygon.gateway.tenderly.co'],
 }
 const NAME = { [arbitrum.id]: 'Arbitrum', [base.id]: 'Base', [polygon.id]: 'Polygon' }
 const CHAINS = { [arbitrum.id]: arbitrum, [base.id]: base, [polygon.id]: polygon }
@@ -42,7 +44,17 @@ const USER = '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
 const AMOUNT = parseUnits('1000', 18)
 
 for (const src of [arbitrum.id, base.id, polygon.id]) {
-  const client = createPublicClient({ chain: CHAINS[src], transport: http(RPC[src]) })
+  const clients = RPC[src].map((url) =>
+    createPublicClient({ chain: CHAINS[src], transport: http(url) }),
+  )
+  /** Prueba cada RPC de la red hasta que uno conteste. */
+  const readAny = async (call) => {
+    let lastError
+    for (const client of clients) {
+      try { return await call(client) } catch (e) { lastError = e }
+    }
+    throw lastError
+  }
   for (const dst of [arbitrum.id, base.id, polygon.id]) {
     if (src === dst) continue
     const param = {
@@ -52,8 +64,8 @@ for (const src of [arbitrum.id, base.id, polygon.id]) {
     }
     try {
       const [fee, oft] = await Promise.all([
-        client.readContract({ address: ADAPTERS[src], abi, functionName: 'quoteSend', args: [param, false] }),
-        client.readContract({ address: ADAPTERS[src], abi, functionName: 'quoteOFT', args: [param] }),
+        readAny((c) => c.readContract({ address: ADAPTERS[src], abi, functionName: 'quoteSend', args: [param, false] })),
+        readAny((c) => c.readContract({ address: ADAPTERS[src], abi, functionName: 'quoteOFT', args: [param] })),
       ])
       const native = CHAINS[src].nativeCurrency.symbol
       console.log(

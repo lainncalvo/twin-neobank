@@ -2,7 +2,7 @@
 
 import { TOKENS, chainsForToken, type TokenSymbol } from '@/lib/tokens'
 import { CHAIN_META, explorerTx, type SupportedChainId } from '@/lib/chains'
-import { formatAmount } from '@/lib/format'
+import { formatAmount, formatEth } from '@/lib/format'
 import { Card, Label, Spinner, cn } from './ui'
 
 export function AmountInput({
@@ -32,12 +32,14 @@ export function AmountInput({
             className="text-xs text-ink-400 transition-colors hover:text-mint-400"
           >
             Disponible{' '}
-            <span className="font-mono tabular-nums">{formatAmount(max, meta.decimals)}</span>
+            <span className="font-mono tabular-nums">
+              {meta.kind === 'native' ? formatEth(max) : formatAmount(max, meta.decimals)}
+            </span>
           </button>
         )}
       </div>
       <div className="flex items-center gap-2 rounded-xl border border-ink-800 bg-ink-900 px-4 py-3 focus-within:border-ink-600">
-        <span className="text-lg text-ink-400">$</span>
+        {meta.kind === 'erc20' && <span className="text-lg text-ink-400">$</span>}
         <input
           inputMode="decimal"
           type="text"

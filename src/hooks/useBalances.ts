@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo } from 'react'
-import { useReadContracts } from 'wagmi'
+import { useBalance, useReadContracts } from 'wagmi'
+import { arbitrum, base, polygon } from 'wagmi/chains'
 import { erc20Abi } from 'viem'
 import { allTokenChainPairs, TOKENS, TOKEN_ORDER, type TokenSymbol } from '@/lib/tokens'
 import type { SupportedChainId } from '@/lib/chains'
@@ -15,6 +16,10 @@ export type TokenBalance = {
 /**
  * Un solo useReadContracts con todos los pares (token, chain). wagmi agrupa por
  * chain y manda un multicall por red, asi que son 3 requests y no 18.
+ *
+ * Las monedas nativas van aparte: no tienen contrato, se leen con eth_getBalance y
+ * no entran en un multicall. Son 3 lecturas mas, una por red, con cantidad fija de
+ * hooks.
  */
 export function useBalances(address?: `0x${string}`) {
   const pairs = useMemo(() => allTokenChainPairs(), [])
@@ -40,6 +45,12 @@ export function useBalances(address?: `0x${string}`) {
     },
   })
 
+  // Mismo patron que GasGuard. Se refrescan al mismo ritmo que el multicall.
+  const nativeQuery = { enabled: Boolean(address), refetchInterval: 15_000 }
+  const ethArbitrum = useBalance({ address, chainId: arbitrum.id, query: nativeQuery })
+  const ethBase = useBalance({ address, chainId: base.id, query: nativeQuery })
+  const polPolygon = useBalance({ address, chainId: polygon.id, query: nativeQuery })
+
   const balances = useMemo(() => {
     const map = new Map<TokenSymbol, TokenBalance>()
     for (const symbol of TOKEN_ORDER) {
@@ -52,8 +63,23 @@ export function useBalances(address?: `0x${string}`) {
       entry.byChain[chainId] = value
       entry.total += value
     })
+
+    // ETH suma Arbitrum y Base porque es el mismo activo. POL no se suma con nada:
+    // es otra moneda, solo que tambien paga gas.
+    const native: [TokenSymbol, SupportedChainId, bigint | undefined][] = [
+      ['ETH', arbitrum.id, ethArbitrum.data?.value],
+      ['ETH', base.id, ethBase.data?.value],
+      ['POL', polygon.id, polPolygon.data?.value],
+    ]
+    for (const [symbol, chainId, value] of native) {
+      if (value === undefined) continue
+      const entry = map.get(symbol)!
+      entry.byChain[chainId] = value
+      entry.total += value
+    }
+
     return map
-  }, [query.data, pairs])
+  }, [query.data, pairs, ethArbitrum.data?.value, ethBase.data?.value, polPolygon.data?.value])
 
   /** Solo los tokens con saldo, mas ARGt que siempre se muestra (es el milestone 1). */
   const visible = useMemo(() => {
@@ -65,7 +91,8 @@ export function useBalances(address?: `0x${string}`) {
     balances,
     visible,
     all: TOKEN_ORDER.map((s) => balances.get(s)!),
-    isLoading: query.isLoading,
+    isLoading:
+      query.isLoading || ethArbitrum.isLoading || ethBase.isLoading || polPolygon.isLoading,
     isFetching: query.isFetching,
     refetch: query.refetch,
     error: query.error,

@@ -10,7 +10,8 @@ import { useHistory } from '@/hooks/useHistory'
 import { useVaultPosition } from '@/hooks/useVault'
 import { MovementRow } from '@/components/MovementRow'
 import { formatAmount } from '@/lib/format'
-import { HARD_TOKENS, TWIN_TOKENS, type TokenSymbol } from '@/lib/tokens'
+import { chainsForToken, HARD_TOKENS, NATIVE_TOKENS, TWIN_TOKENS, type TokenSymbol } from '@/lib/tokens'
+import { CHAIN_META } from '@/lib/chains'
 
 const ACTIONS = [
   { href: '/enviar', label: 'Enviar', icon: 'M17 3 3 9.2l5.3 2.1L10.4 17 17 3Z' },
@@ -41,6 +42,7 @@ function Home() {
   const region = TWIN_TOKENS.filter((s) => s !== 'ARGt')
     .map(bySymbol)
     .filter(Boolean) as TokenBalance[]
+  const native = NATIVE_TOKENS.map(bySymbol).filter(Boolean) as TokenBalance[]
 
   return (
     <div className="space-y-6">
@@ -105,6 +107,27 @@ function Home() {
         <Card className="divide-y divide-ink-800/70 p-1">
           {region.map((b) => (
             <TokenRow key={b.symbol} symbol={b.symbol} total={b.total} loading={isLoading} />
+          ))}
+        </Card>
+      </section>
+
+      {/* Con estas se paga el gas. Van siempre, aunque esten en cero: no poder ver
+          cuanto gas hay es exactamente el problema que esta seccion resuelve. */}
+      <section>
+        <h2 className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-400">
+          Para pagar red
+        </h2>
+        <Card className="divide-y divide-ink-800/70 p-1">
+          {native.map((b) => (
+            <TokenRow
+              key={b.symbol}
+              symbol={b.symbol}
+              total={b.total}
+              loading={isLoading}
+              subtitle={chainsForToken(b.symbol)
+                .map((id) => CHAIN_META[id].name)
+                .join(' · ')}
+            />
           ))}
         </Card>
       </section>

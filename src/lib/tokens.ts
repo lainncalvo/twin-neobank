@@ -4,6 +4,7 @@ import type { SupportedChainId } from './chains'
 export type TokenSymbol =
   | 'ARGt' | 'BRAt' | 'MEXt' | 'CHLt' | 'COLt' | 'PERt' | 'BOLt'
   | 'USDC' | 'USDT' | 'EURC'
+  | 'ETH' | 'POL'
 
 export type TokenMeta = {
   symbol: TokenSymbol
@@ -11,8 +12,16 @@ export type TokenMeta = {
   currency: string
   flag: string
   decimals: number
-  /** Direcciones por chain. Un token no existe en todas. */
+  /**
+   * 'native' es la moneda con la que se paga el gas: no tiene contrato, no se
+   * puede leer con balanceOf y no se envia con transfer. Todo lo que arme una
+   * llamada a contrato tiene que filtrar por esto.
+   */
+  kind: 'erc20' | 'native'
+  /** Direcciones por chain. Un token no existe en todas. Vacia en las nativas. */
   addresses: Partial<Record<SupportedChainId, `0x${string}`>>
+  /** Solo las nativas: en que redes existen. Reemplaza a `addresses` para ellas. */
+  chains?: SupportedChainId[]
 }
 
 /**
@@ -27,6 +36,7 @@ export type TokenMeta = {
 export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   ARGt: {
     symbol: 'ARGt',
+    kind: 'erc20',
     name: 'Argentine Peso token',
     currency: 'Peso argentino',
     flag: '🇦🇷',
@@ -39,6 +49,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   BRAt: {
     symbol: 'BRAt',
+    kind: 'erc20',
     name: 'Brazilian Real token',
     currency: 'Real brasileño',
     flag: '🇧🇷',
@@ -51,6 +62,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   MEXt: {
     symbol: 'MEXt',
+    kind: 'erc20',
     name: 'Mexican Peso token',
     currency: 'Peso mexicano',
     flag: '🇲🇽',
@@ -62,6 +74,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   CHLt: {
     symbol: 'CHLt',
+    kind: 'erc20',
     name: 'Chilean Peso token',
     currency: 'Peso chileno',
     flag: '🇨🇱',
@@ -74,6 +87,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   COLt: {
     symbol: 'COLt',
+    kind: 'erc20',
     name: 'Colombian Peso token',
     currency: 'Peso colombiano',
     flag: '🇨🇴',
@@ -85,6 +99,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   PERt: {
     symbol: 'PERt',
+    kind: 'erc20',
     name: 'Peruvian Sol token',
     currency: 'Sol peruano',
     flag: '🇵🇪',
@@ -96,6 +111,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   BOLt: {
     symbol: 'BOLt',
+    kind: 'erc20',
     name: 'Bolivian Boliviano token',
     currency: 'Boliviano',
     flag: '🇧🇴',
@@ -115,6 +131,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   // de aca, no del contrato.
   USDC: {
     symbol: 'USDC',
+    kind: 'erc20',
     name: 'USD Coin',
     currency: 'Dolar',
     flag: '🇺🇸',
@@ -127,6 +144,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   },
   USDT: {
     symbol: 'USDT',
+    kind: 'erc20',
     name: 'Tether USD',
     currency: 'Dolar (Tether)',
     flag: '🇺🇸',
@@ -140,6 +158,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   // EURC solo lo desplego Circle en Base, de las tres redes que soporta la app.
   EURC: {
     symbol: 'EURC',
+    kind: 'erc20',
     name: 'Euro Coin',
     currency: 'Euro',
     flag: '🇪🇺',
@@ -147,6 +166,31 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
     addresses: {
       [base.id]: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
     },
+  },
+
+  // Monedas nativas: con estas se paga el gas de todo lo demas.
+  //
+  // OJO: no son un token con N direcciones, son un activo por red. Arbitrum y Base
+  // usan ETH; Polygon usa POL, que es OTRO activo y no se suma con el ETH.
+  ETH: {
+    symbol: 'ETH',
+    kind: 'native',
+    name: 'Ether',
+    currency: 'Ether',
+    flag: 'Ξ',
+    decimals: 18,
+    addresses: {},
+    chains: [arbitrum.id, base.id],
+  },
+  POL: {
+    symbol: 'POL',
+    kind: 'native',
+    name: 'Polygon',
+    currency: 'Polygon',
+    flag: '⬣',
+    decimals: 18,
+    addresses: {},
+    chains: [polygon.id],
   },
 }
 
@@ -156,6 +200,7 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
  */
 export const TOKEN_ORDER: TokenSymbol[] = [
   'ARGt', 'USDC', 'USDT', 'EURC', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt',
+  'ETH', 'POL',
 ]
 
 /** Monedas fuertes: el destino de dolarizar. */
@@ -164,17 +209,31 @@ export const HARD_TOKENS: TokenSymbol[] = ['USDC', 'USDT', 'EURC']
 /** Las stablecoins que emite Twin, una por pais. */
 export const TWIN_TOKENS: TokenSymbol[] = ['ARGt', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt']
 
+/** Con estas se paga el gas. Se muestran siempre, incluso en cero: no poder verlas
+ *  es justo el problema que esta seccion resuelve. */
+export const NATIVE_TOKENS: TokenSymbol[] = ['ETH', 'POL']
+
 export function tokenAddress(symbol: TokenSymbol, chainId: SupportedChainId) {
   return TOKENS[symbol].addresses[chainId]
 }
 
 export function chainsForToken(symbol: TokenSymbol): SupportedChainId[] {
-  return Object.keys(TOKENS[symbol].addresses).map(Number) as SupportedChainId[]
+  const meta = TOKENS[symbol]
+  // Las nativas no tienen direcciones: si se leyera `addresses` devolveria [], y
+  // ese array vacio se propaga hasta CHAIN_META[undefined] y rompe los pickers.
+  if (meta.kind === 'native') return meta.chains ?? []
+  return Object.keys(meta.addresses).map(Number) as SupportedChainId[]
 }
 
-/** Todos los pares (symbol, chainId) que existen. Base para el multicall de balances. */
+/**
+ * Todos los pares (symbol, chainId) que se pueden leer con balanceOf.
+ *
+ * El filtro por kind NO es opcional: las nativas no tienen contrato, y meterlas en
+ * el multicall no tira un error visible sino que devuelve failure -> 0n, o sea que
+ * el saldo se mostraria en cero para siempre sin que nada avise.
+ */
 export function allTokenChainPairs(): { symbol: TokenSymbol; chainId: SupportedChainId }[] {
-  return TOKEN_ORDER.flatMap((symbol) =>
+  return TOKEN_ORDER.filter((symbol) => TOKENS[symbol].kind === 'erc20').flatMap((symbol) =>
     chainsForToken(symbol).map((chainId) => ({ symbol, chainId })),
   )
 }
