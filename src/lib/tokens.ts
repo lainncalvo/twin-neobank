@@ -1,7 +1,9 @@
 import { arbitrum, base, polygon } from 'wagmi/chains'
 import type { SupportedChainId } from './chains'
 
-export type TokenSymbol = 'ARGt' | 'BRAt' | 'MEXt' | 'CHLt' | 'COLt' | 'PERt' | 'BOLt'
+export type TokenSymbol =
+  | 'ARGt' | 'BRAt' | 'MEXt' | 'CHLt' | 'COLt' | 'PERt' | 'BOLt'
+  | 'USDC' | 'USDT' | 'EURC'
 
 export type TokenMeta = {
   symbol: TokenSymbol
@@ -17,6 +19,10 @@ export type TokenMeta = {
  * OJO: hay addresses que se repiten entre tokens distintos en chains distintas.
  * 0x59863989... es ARGt en Arbitrum pero MEXt en Base, y BRAt en Polygon.
  * Siempre indexar por (chainId, symbol), nunca por address sola.
+ *
+ * OJO 2: desde que entraron USDC/USDT/EURC conviven tokens de 6 y de 18 decimales.
+ * Todo lo que formatee o parsee tiene que leer TOKENS[symbol].decimals; asumir 18
+ * hace que un saldo de 10 USDC se muestre como 0,00000000000001.
  */
 export const TOKENS: Record<TokenSymbol, TokenMeta> = {
   ARGt: {
@@ -100,10 +106,63 @@ export const TOKENS: Record<TokenSymbol, TokenMeta> = {
       [polygon.id]: '0x20ECA820D3cd00ed9C9f2861Cdf6429baCD8ed55',
     },
   },
+
+  // Monedas fuertes. No las emite Twin: son las nativas de cada red, verificadas
+  // con scripts/verify-tokens.mjs. Las tres tienen 6 decimales, no 18.
+  //
+  // El symbol() on-chain de USDT no dice "USDT": es "USD₮0" en Arbitrum y "USDT0"
+  // en Polygon, por el rebrand omnichain de Tether. El nombre que se muestra sale
+  // de aca, no del contrato.
+  USDC: {
+    symbol: 'USDC',
+    name: 'USD Coin',
+    currency: 'Dolar',
+    flag: '🇺🇸',
+    decimals: 6,
+    addresses: {
+      [arbitrum.id]: '0xaf88d065e77c8cC2239327C5EDb3A432268e5831',
+      [base.id]: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+      [polygon.id]: '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359',
+    },
+  },
+  USDT: {
+    symbol: 'USDT',
+    name: 'Tether USD',
+    currency: 'Dolar (Tether)',
+    flag: '🇺🇸',
+    decimals: 6,
+    addresses: {
+      [arbitrum.id]: '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9',
+      [base.id]: '0xfde4C96c8593536E31F229EA8f37b2ADa2699bb2',
+      [polygon.id]: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F',
+    },
+  },
+  // EURC solo lo desplego Circle en Base, de las tres redes que soporta la app.
+  EURC: {
+    symbol: 'EURC',
+    name: 'Euro Coin',
+    currency: 'Euro',
+    flag: '🇪🇺',
+    decimals: 6,
+    addresses: {
+      [base.id]: '0x60a3E35Cc302bFA44Cb288Bc5a4F316Fdb1adb42',
+    },
+  },
 }
 
-/** Orden en que se muestran en la home. ARGt primero: es el del milestone 1. */
-export const TOKEN_ORDER: TokenSymbol[] = ['ARGt', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt']
+/**
+ * Orden en que se muestran en la home. ARGt primero (es el del milestone 1) y USDC
+ * segundo: es el destino de "dolarizar", el producto estrella.
+ */
+export const TOKEN_ORDER: TokenSymbol[] = [
+  'ARGt', 'USDC', 'USDT', 'EURC', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt',
+]
+
+/** Monedas fuertes: el destino de dolarizar. */
+export const HARD_TOKENS: TokenSymbol[] = ['USDC', 'USDT', 'EURC']
+
+/** Las stablecoins que emite Twin, una por pais. */
+export const TWIN_TOKENS: TokenSymbol[] = ['ARGt', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt']
 
 export function tokenAddress(symbol: TokenSymbol, chainId: SupportedChainId) {
   return TOKENS[symbol].addresses[chainId]

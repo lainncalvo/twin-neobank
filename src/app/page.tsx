@@ -5,9 +5,10 @@ import { useAccount } from 'wagmi'
 import { AppShell } from '@/components/AppShell'
 import { HeroBalance, TokenRow } from '@/components/BalanceCard'
 import { Card } from '@/components/ui'
-import { useBalances } from '@/hooks/useBalances'
+import { useBalances, type TokenBalance } from '@/hooks/useBalances'
 import { useVaultPosition } from '@/hooks/useVault'
 import { formatAmount } from '@/lib/format'
+import { HARD_TOKENS, TWIN_TOKENS, type TokenSymbol } from '@/lib/tokens'
 
 const ACTIONS = [
   { href: '/enviar', label: 'Enviar', icon: 'M17 3 3 9.2l5.3 2.1L10.4 17 17 3Z' },
@@ -29,7 +30,11 @@ function Home() {
   const { balances, all, isLoading } = useBalances(address)
   const argt = balances.get('ARGt')!
   const vault = useVaultPosition(address)
-  const others = all.filter((b) => b.symbol !== 'ARGt')
+  const bySymbol = (s: TokenSymbol) => all.find((b) => b.symbol === s)
+  const hard = HARD_TOKENS.map(bySymbol).filter(Boolean) as TokenBalance[]
+  const region = TWIN_TOKENS.filter((s) => s !== 'ARGt')
+    .map(bySymbol)
+    .filter(Boolean) as TokenBalance[]
 
   return (
     <div className="space-y-6">
@@ -74,12 +79,25 @@ function Home() {
         </Link>
       )}
 
+      {/* Los dolares van primero y se muestran aunque esten en cero: es el destino
+          de /cambiar, y en la demo se los ve llenarse. */}
       <section>
         <h2 className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-400">
-          Otras monedas
+          Dólares y euros
         </h2>
         <Card className="divide-y divide-ink-800/70 p-1">
-          {others.map((b) => (
+          {hard.map((b) => (
+            <TokenRow key={b.symbol} symbol={b.symbol} total={b.total} loading={isLoading} />
+          ))}
+        </Card>
+      </section>
+
+      <section>
+        <h2 className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-400">
+          Monedas de la región
+        </h2>
+        <Card className="divide-y divide-ink-800/70 p-1">
+          {region.map((b) => (
             <TokenRow key={b.symbol} symbol={b.symbol} total={b.total} loading={isLoading} />
           ))}
         </Card>
