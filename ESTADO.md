@@ -39,6 +39,11 @@ Sin probar todavia: **retirar del vault** y la pantalla `/recibir`.
 - **Movimientos** (`/movimientos`) — historial leido de los logs de las 3 redes, sin
   indexer ni backend. Agrupa por transaccion para que un swap sea una fila.
   Probado contra la wallet real: encuentra las 5 operaciones con etiqueta correcta.
+- **Moneda nativa** — ver el saldo de ETH (Arbitrum + Base) y POL (Polygon) en la
+  seccion "Para pagar red" del inicio, y enviarlos desde `/enviar`. El boton de
+  maximo reserva gas: el saldo entero no se puede mandar porque la comision se paga
+  con la misma moneda. Verificado con `scripts/verify-native.mjs`.
+  **Sin probar todavia con plata real.**
 
 ## Dos cosas de infraestructura que aparecieron
 
@@ -47,6 +52,13 @@ Sin probar todavia: **retirar del vault** y la pantalla `/recibir`.
    arma clientes propios contra los gateways de Tenderly, aislados de `wagmi.ts`.
 2. `wagmi.ts` ahora arma los transports con `fallback`. Aditivo: el suplente entra
    solo cuando el primario falla.
+
+## Limitacion conocida
+
+`/movimientos` **no** muestra los envios de moneda nativa. Las transferencias
+nativas no emiten logs, `useHistory` filtra por `event Transfer`, y ningun RPC
+publico disponible expone `trace_filter` ni `alchemy_getAssetTransfers`. No es un
+bug: mostrarlos requeriria escanear las transacciones de cada bloque o un indexer.
 
 ## Bloqueante para probar dolarizar
 
