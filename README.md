@@ -73,7 +73,7 @@ El registry de tokens indexa siempre por `(chainId, symbol)`, nunca por direcci�
 
 ## Contratos
 
-**Vault (M2)** — ARGt Prime (`saARGt`), Morpho Vault V2 en Arbitrum
+**Vault (M2)** — ARGt Prime (`sARGt`), Morpho Vault V2 en Arbitrum
 `0x9Dd3F844747AB78d616BF76DB92756E17A064aDD`
 
 **Bridge (M3)** — OFT Adapters de ARGt
