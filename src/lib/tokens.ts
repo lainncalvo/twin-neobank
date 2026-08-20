@@ -1,0 +1,121 @@
+import { arbitrum, base, polygon } from 'wagmi/chains'
+import type { SupportedChainId } from './chains'
+
+export type TokenSymbol = 'ARGt' | 'BRAt' | 'MEXt' | 'CHLt' | 'COLt' | 'PERt' | 'BOLt'
+
+export type TokenMeta = {
+  symbol: TokenSymbol
+  name: string
+  currency: string
+  flag: string
+  decimals: number
+  /** Direcciones por chain. Un token no existe en todas. */
+  addresses: Partial<Record<SupportedChainId, `0x${string}`>>
+}
+
+/**
+ * OJO: hay addresses que se repiten entre tokens distintos en chains distintas.
+ * 0x59863989... es ARGt en Arbitrum pero MEXt en Base, y BRAt en Polygon.
+ * Siempre indexar por (chainId, symbol), nunca por address sola.
+ */
+export const TOKENS: Record<TokenSymbol, TokenMeta> = {
+  ARGt: {
+    symbol: 'ARGt',
+    name: 'Argentine Peso token',
+    currency: 'Peso argentino',
+    flag: '🇦🇷',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0x59863989d080B22476DB95656d0C3CC18be92214',
+      [base.id]: '0xf016413834E6D1A14F3D628B11D6Ef725a6bdbDD',
+      [polygon.id]: '0x50464bE58912745447E24EB3bbDedcee10D3E056',
+    },
+  },
+  BRAt: {
+    symbol: 'BRAt',
+    name: 'Brazilian Real token',
+    currency: 'Real brasileño',
+    flag: '🇧🇷',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0xC4ed6Aba5373D78E160F4df39e011F078Be54df8',
+      [base.id]: '0xFEE29845569570F8e0119291dff77B7b93283aaB',
+      [polygon.id]: '0x59863989d080B22476DB95656d0C3CC18be92214',
+    },
+  },
+  MEXt: {
+    symbol: 'MEXt',
+    name: 'Mexican Peso token',
+    currency: 'Peso mexicano',
+    flag: '🇲🇽',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0xb96aA6babCcD738d6644ADd4912fE5eFbEBF5a25',
+      [base.id]: '0x59863989d080B22476DB95656d0C3CC18be92214',
+    },
+  },
+  CHLt: {
+    symbol: 'CHLt',
+    name: 'Chilean Peso token',
+    currency: 'Peso chileno',
+    flag: '🇨🇱',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0xe8dbC4680235cCAeFf48e4C0B0EaceeBb89E5e17',
+      [base.id]: '0x95ef2370166b250e7CE3b8F236c7e7E9feD12c2e',
+      [polygon.id]: '0xfa658f62CA6cacaa769035AdBcbeD9Bf75f9f72D',
+    },
+  },
+  COLt: {
+    symbol: 'COLt',
+    name: 'Colombian Peso token',
+    currency: 'Peso colombiano',
+    flag: '🇨🇴',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0xa16d5DB80A45157E0e451750B81FF0CC0b61d558',
+      [base.id]: '0xD70ad085684b2A9f4B5d54D7BDB2ecA37a273216',
+    },
+  },
+  PERt: {
+    symbol: 'PERt',
+    name: 'Peruvian Sol token',
+    currency: 'Sol peruano',
+    flag: '🇵🇪',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0x899438713f62B04d6CD8e8709986F7256fB6E3d9',
+      [base.id]: '0xD09ABA2969B822d66DC4Bc3bB58eE520Bcf9f0C3',
+    },
+  },
+  BOLt: {
+    symbol: 'BOLt',
+    name: 'Bolivian Boliviano token',
+    currency: 'Boliviano',
+    flag: '🇧🇴',
+    decimals: 18,
+    addresses: {
+      [arbitrum.id]: '0x1edF5E61B6a4Fe19FEf3A695328F61aAa07728eA',
+      [base.id]: '0x1d2E8C1Fe82ab2AD8dc43eD98A2F507Dfb5b4995',
+      [polygon.id]: '0x20ECA820D3cd00ed9C9f2861Cdf6429baCD8ed55',
+    },
+  },
+}
+
+/** Orden en que se muestran en la home. ARGt primero: es el del milestone 1. */
+export const TOKEN_ORDER: TokenSymbol[] = ['ARGt', 'BRAt', 'MEXt', 'CHLt', 'COLt', 'PERt', 'BOLt']
+
+export function tokenAddress(symbol: TokenSymbol, chainId: SupportedChainId) {
+  return TOKENS[symbol].addresses[chainId]
+}
+
+export function chainsForToken(symbol: TokenSymbol): SupportedChainId[] {
+  return Object.keys(TOKENS[symbol].addresses).map(Number) as SupportedChainId[]
+}
+
+/** Todos los pares (symbol, chainId) que existen. Base para el multicall de balances. */
+export function allTokenChainPairs(): { symbol: TokenSymbol; chainId: SupportedChainId }[] {
+  return TOKEN_ORDER.flatMap((symbol) =>
+    chainsForToken(symbol).map((chainId) => ({ symbol, chainId })),
+  )
+}

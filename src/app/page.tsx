@@ -1,69 +1,94 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import Link from 'next/link'
+import { useAccount } from 'wagmi'
+import { AppShell } from '@/components/AppShell'
+import { HeroBalance, TokenRow } from '@/components/BalanceCard'
+import { Card } from '@/components/ui'
+import { useBalances } from '@/hooks/useBalances'
+import { useVaultPosition } from '@/hooks/useVault'
+import { formatAmount } from '@/lib/format'
+
+const ACTIONS = [
+  { href: '/enviar', label: 'Enviar', icon: 'M17 3 3 9.2l5.3 2.1L10.4 17 17 3Z' },
+  { href: '/recibir', label: 'Recibir', icon: 'M10 3v9.2l3.2-3.2 1.4 1.4-5.6 5.6-5.6-5.6 1.4-1.4L8 12.2V3h2Z' },
+  { href: '/ahorro', label: 'Ahorrar', icon: 'M3 6.5A2.5 2.5 0 0 1 5.5 4h9A2.5 2.5 0 0 1 17 6.5v7a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 3 13.5v-7Zm10.5 5.5a1.25 1.25 0 1 0 0-2.5 1.25 1.25 0 0 0 0 2.5Z' },
+  { href: '/mover', label: 'Mover', icon: 'M6.5 3 2 7.5l4.5 4.5V9h7V6h-7V3Zm7 6v3h-7v3h7v3L18 13.5 13.5 9Z' },
+]
+
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <AppShell>
+      <Home />
+    </AppShell>
+  )
+}
+
+function Home() {
+  const { address } = useAccount()
+  const { balances, all, isLoading } = useBalances(address)
+  const argt = balances.get('ARGt')!
+  const vault = useVaultPosition(address)
+  const others = all.filter((b) => b.symbol !== 'ARGt')
+
+  return (
+    <div className="space-y-6">
+      <HeroBalance
+        symbol="ARGt"
+        total={argt.total}
+        byChain={argt.byChain}
+        loading={isLoading}
+      />
+
+      <div className="grid grid-cols-4 gap-2">
+        {ACTIONS.map((a) => (
+          <Link
+            key={a.href}
+            href={a.href}
+            className="flex flex-col items-center gap-2 rounded-xl border border-ink-800 bg-ink-900/60 py-3 text-[11px] font-medium text-ink-300 transition-colors hover:border-ink-600 hover:text-ink-100"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <svg viewBox="0 0 20 20" className="size-5" fill="currentColor" aria-hidden>
+              <path d={a.icon} />
+            </svg>
+            {a.label}
+          </Link>
+        ))}
+      </div>
+
+      {vault.assets !== undefined && vault.assets > 0n && (
+        <Link href="/ahorro" className="block">
+          <Card className="flex items-center gap-3 p-4 transition-colors hover:border-ink-600">
+            <span className="grid size-10 place-items-center rounded-full bg-mint-400/10 text-mint-400">
+              <svg viewBox="0 0 20 20" className="size-5" fill="currentColor" aria-hidden>
+                <path d="M3 15.5 8 10l3 3 6-7v9.5H3Z" />
+              </svg>
+            </span>
+            <span className="flex-1">
+              <span className="block text-sm font-medium">En ahorro</span>
+              <span className="block text-xs text-ink-400">ARGt Prime · Arbitrum</span>
+            </span>
+            <span className="font-mono text-sm tabular-nums text-mint-400">
+              {formatAmount(vault.assets, 18)}
+            </span>
+          </Card>
+        </Link>
+      )}
+
+      <section>
+        <h2 className="px-3 pb-1 text-xs font-medium uppercase tracking-wide text-ink-400">
+          Otras monedas
+        </h2>
+        <Card className="divide-y divide-ink-800/70 p-1">
+          {others.map((b) => (
+            <TokenRow key={b.symbol} symbol={b.symbol} total={b.total} loading={isLoading} />
+          ))}
+        </Card>
+      </section>
+
+      <p className="px-2 pb-4 text-[11px] leading-relaxed text-ink-600">
+        Twin Stablecoins son instrumentos de pago digital respaldados por reservas. No son valores
+        negociables ni productos de inversión.
+      </p>
     </div>
-  );
+  )
 }
